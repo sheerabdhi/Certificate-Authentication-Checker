@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Admin Dashboard</title>
+
+    <style>
+        body {
+            margin: 0;
+            font-family: Arial;
+            background: linear-gradient(to right, #080029, #110144);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+        }
+
+        .container {
+            background: white;
+            padding: 40px;
+            border-radius: 15px;
+            width: 350px;
+            text-align: center;
+        }
+
+        input {
+            width: 90%;
+            padding: 10px;
+            margin: 8px 0;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #0f003a;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+
+        #result, #deleteResult {
+            margin-top: 10px;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+    <h2>Admin Dashboard</h2>
+
+    <!-- ADD CERTIFICATE -->
+    <h3>Add Certificate</h3>
+
+    <input type="text" id="cert_id" placeholder="Certificate ID">
+    <input type="text" id="name" placeholder="Student Name">
+    <input type="text" id="course" placeholder="Course Name">
+    <input type="date" id="issue_date">
+    <input type="file" id="image">
+
+    <button onclick="addCertificate()">Add Certificate</button>
+
+    <p id="result"></p>
+
+    <!-- DELETE CERTIFICATE -->
+    <h3>Delete Certificate</h3>
+
+    <input type="text" id="deleteId" placeholder="Enter Certificate ID">
+    <button onclick="deleteCertificate()">Delete</button>
+
+    <p id="deleteResult"></p>
+</div>
+
+<script>
+
+// ADD
+function addCertificate() {
+
+    const cert_id = document.getElementById("cert_id").value;
+    const name = document.getElementById("name").value;
+    const course = document.getElementById("course").value;
+    const issue_date = document.getElementById("issue_date").value;
+
+    fetch("http://localhost:5000/add-certificate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ cert_id, name, course, issue_date })
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("result").innerText = data.status;
+    })
+    .catch(() => {
+        document.getElementById("result").innerText = "Server Error";
+    });
+}
+
+
+// DELETE
+function deleteCertificate() {
+
+    const certId = document.getElementById("deleteId").value;
+
+    if (!certId) {
+        document.getElementById("deleteResult").innerText = "Enter ID";
+        return;
+    }
+
+    fetch(`http://localhost:5000/delete-certificate/${certId}`, {
+        method: "DELETE"
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("deleteResult").innerText = data.status;
+    })
+    .catch(() => {
+        document.getElementById("deleteResult").innerText = "Server Error";
+    });
+}
+
+function addCertificate() {
+    const formData = new FormData();
+
+    formData.append("cert_id", document.getElementById("cert_id").value);
+    formData.append("name", document.getElementById("name").value);
+    formData.append("course", document.getElementById("course").value);
+    formData.append("issue_date", document.getElementById("issue_date").value);
+    formData.append("image", document.getElementById("image").files[0]);
+
+    fetch("http://localhost:5000/add-certificate", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.json())
+    .then(data => {
+        document.getElementById("result").innerText = data.status;
+    });
+}
+</script>
+
+</body>
+</html>

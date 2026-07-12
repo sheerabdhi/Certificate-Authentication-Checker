@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Certificate Authentication Checker</title>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 80px;
+            background-color: #14002a;
+        }
+
+        .container {
+            background: rgb(226, 207, 240);
+            padding: 30px;
+            width: 400px;
+            margin: auto;
+            border-radius: 10px;
+            box-shadow: 0px 0px 10px gray;
+        }
+
+        input {
+            padding: 10px;
+            width: 85%;
+            margin-bottom: 15px;
+        }
+
+        button {
+            padding: 10px 20px;
+            background-color: #4CAF50;
+            color: black;
+            border: none;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        button:hover {
+            background-color: #45a049;
+        }
+
+        #result, #allCertificates {
+            margin-top: 20px;
+            font-size: 16px;
+        }
+
+        img {
+            margin-top: 10px;
+        }
+
+        .admin-link {
+            margin-top: 20px;
+            display: block;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="container">
+
+    <h2>Certificate Verification</h2>
+
+    <input type="text" id="certId" placeholder="Enter Certificate ID">
+    <br>
+
+    <button onclick="verifyCertificate()">Verify</button>
+    <button onclick="loadCertificates()">View All Certificates</button>
+
+    <div id="result"></div>
+    <div id="allCertificates"></div>
+
+    <a class="admin-link" href="admin.html">🔐 Admin Login</a>
+
+</div>
+
+<script>
+
+// 🔹 VERIFY CERTIFICATE
+async function verifyCertificate(certIdFromQR = null) {
+
+    const certId = certIdFromQR || document.getElementById("certId").value;
+
+    if (!certId) {
+        document.getElementById("result").innerHTML =
+            "⚠ Please enter Certificate ID";
+        return;
+    }
+
+    try {
+        const response = await fetch("http://localhost:5000/verify", {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({ cert_id: certId })
+        });
+
+        const data = await response.json();
+
+        if (data.status === "Valid Certificate") {
+
+            const imageUrl = "http://localhost:5000/uploads/" + data.data.image;
+
+            document.getElementById("result").innerHTML =
+                "✅ <span style='color:green;'>Valid Certificate</span><br><br>" +
+                "Name: " + data.data.name + "<br>" +
+                "Course: " + data.data.course + "<br>" +
+                "Issue Date: " + data.data.issue_date + "<br><br>" +
+                "<b>Certificate:</b><br>" +
+                "<img src='" + imageUrl + "' width='200'/>";
+
+        } else {
+            document.getElementById("result").innerHTML =
+                "❌ <span style='color:red;'>Invalid Certificate</span>";
+        }
+
+    } catch (error) {
+        document.getElementById("result").innerHTML =
+            "⚠ Server Error. Please check backend connection.";
+    }
+}
+
+
+// 🔹 LOAD ALL CERTIFICATES
+async function loadCertificates() {
+    try {
+        const response = await fetch("http://localhost:5000/certificates");
+        const data = await response.json();
+
+        let output = "<h3>All Certificates:</h3>";
+
+        data.forEach(cert => {
+            const imageUrl = "http://localhost:5000/uploads/" + cert.image;
+
+            output += `
+                <div style="border:1px solid gray; padding:10px; margin:10px;">
+                    <b>ID:</b> ${cert.cert_id} <br>
+                    <b>Name:</b> ${cert.name} <br>
+                    <b>Course:</b> ${cert.course} <br>
+                    <b>Date:</b> ${cert.issue_date} <br>
+                    <img src="${imageUrl}" width="150"/>
+                </div>
+            `;
+        });
+
+        document.getElementById("allCertificates").innerHTML = output;
+
+    } catch (error) {
+        document.getElementById("allCertificates").innerHTML =
+            "⚠ Error loading certificates";
+    }
+}
+
+
+// 🔹 AUTO VERIFY (QR SUPPORT)
+window.onload = function () {
+    const params = new URLSearchParams(window.location.search);
+    const certId = params.get("cert_id");
+
+    if (certId) {
+        document.getElementById("certId").value = certId;
+        verifyCertificate(certId);
+    }
+};
+
+</script>
+
+</body>
+</html>
